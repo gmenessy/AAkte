@@ -166,11 +166,37 @@ h2 {
 
 .file-item .file-name {
     color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.file-item .file-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-shrink: 0;
 }
 
 .file-item .file-size {
     color: var(--text-secondary);
     font-size: 0.8rem;
+}
+
+.btn-remove {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0 0.2rem;
+    line-height: 1;
+    transition: color 0.15s;
+}
+
+.btn-remove:hover {
+    color: var(--error);
 }
 
 /* Status section */

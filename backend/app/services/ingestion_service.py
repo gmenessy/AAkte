@@ -7,7 +7,7 @@ no actual chunking or embedding happens yet.
 import logging
 from uuid import UUID, uuid4
 
-from app.models.schemas import DocumentIngestRequest, DocumentIngestResponse
+from backend.app.models.schemas import DocumentIngestRequest, DocumentIngestResponse
 
 logger = logging.getLogger(__name__)
 

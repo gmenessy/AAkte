@@ -21,6 +21,7 @@
 
     uploadInput.addEventListener('change', (e) => {
         addFiles(Array.from(e.target.files));
+        uploadInput.value = '';
     });
 
     // Drag & drop
@@ -41,18 +42,59 @@
     });
 
     function addFiles(files) {
-        selectedFiles = selectedFiles.concat(files);
+        for (const file of files) {
+            const isDuplicate = selectedFiles.some(
+                f => f.name === file.name && f.size === file.size
+            );
+            if (!isDuplicate) {
+                selectedFiles.push(file);
+            }
+        }
+        renderFileList();
+        submitBtn.disabled = selectedFiles.length === 0;
+    }
+
+    function removeFile(index) {
+        selectedFiles.splice(index, 1);
         renderFileList();
         submitBtn.disabled = selectedFiles.length === 0;
     }
 
     function renderFileList() {
-        fileList.innerHTML = selectedFiles.map(f => `
-            <div class="file-item">
-                <span class="file-name">${f.name}</span>
-                <span class="file-size">${(f.size / 1024).toFixed(1)} KB</span>
-            </div>
-        `).join('');
+        fileList.innerHTML = '';
+        selectedFiles.forEach((f, i) => {
+            const item = document.createElement('div');
+            item.className = 'file-item';
+
+            const name = document.createElement('span');
+            name.className = 'file-name';
+            name.textContent = f.name;
+
+            const right = document.createElement('span');
+            right.className = 'file-meta';
+
+            const size = document.createElement('span');
+            size.className = 'file-size';
+            size.textContent = formatSize(f.size);
+
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'btn-remove';
+            removeBtn.textContent = '\u00d7';
+            removeBtn.title = 'Entfernen';
+            removeBtn.addEventListener('click', () => removeFile(i));
+
+            right.appendChild(size);
+            right.appendChild(removeBtn);
+            item.appendChild(name);
+            item.appendChild(right);
+            fileList.appendChild(item);
+        });
+    }
+
+    function formatSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     }
 
     // --- Submit ---
@@ -61,28 +103,46 @@
         if (selectedFiles.length === 0) return;
 
         const tenantId = tenantInput.value.trim() || 'default';
+
+        if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(tenantId)) {
+            logStatus('Ungueltige Tenant-ID. Nur Buchstaben, Ziffern, Bindestriche und Unterstriche erlaubt.', 'error');
+            return;
+        }
+
         submitBtn.disabled = true;
         statusSection.hidden = false;
         statusLog.innerHTML = '';
 
+        const total = selectedFiles.length;
+        let completed = 0;
+        let errors = 0;
+
         for (const file of selectedFiles) {
-            await processAndUpload(file, tenantId);
+            const ok = await processAndUpload(file, tenantId, completed + 1, total);
+            if (ok) {
+                completed++;
+            } else {
+                errors++;
+            }
         }
 
-        logStatus('Alle Dokumente verarbeitet.', 'success');
+        const summary = errors === 0
+            ? `Alle ${total} Dokumente erfolgreich verarbeitet.`
+            : `${completed}/${total} erfolgreich, ${errors} fehlgeschlagen.`;
+        logStatus(summary, errors === 0 ? 'success' : 'error');
+
         selectedFiles = [];
-        fileList.innerHTML = '';
+        renderFileList();
         submitBtn.disabled = true;
     });
 
-    async function processAndUpload(file, tenantId) {
-        logStatus(`Verarbeite: ${file.name}...`, 'info');
+    async function processAndUpload(file, tenantId, current, total) {
+        logStatus(`[${current}/${total}] Verarbeite: ${file.name}...`, 'info');
 
         try {
-            // Run CleanDocs pipeline (mock in Sprint 1)
             const { markdown, metrics } = await CleanDocs.process(file);
 
-            logStatus(`Sende: ${file.name} an Backend...`, 'info');
+            logStatus(`[${current}/${total}] Sende: ${file.name} an Backend...`, 'info');
 
             const response = await fetch(`/api/v1/dossier/${encodeURIComponent(tenantId)}/documents`, {
                 method: 'POST',
@@ -102,12 +162,14 @@
             const result = await response.json();
             console.log('[AAkte] Ingestion response:', result);
             logStatus(
-                `${file.name} — ID: ${result.document_id} | Sprache: ${result.language_detected} | Status: ${result.status}`,
+                `[${current}/${total}] ${file.name} — ID: ${result.document_id} | Sprache: ${result.language_detected} | Status: ${result.status}`,
                 'success',
             );
+            return true;
         } catch (err) {
             console.error('[AAkte] Upload failed:', err);
-            logStatus(`Fehler bei ${file.name}: ${err.message}`, 'error');
+            logStatus(`[${current}/${total}] Fehler bei ${file.name}: ${err.message}`, 'error');
+            return false;
         }
     }
 

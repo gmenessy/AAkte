@@ -2,10 +2,19 @@
 
 from fastapi import APIRouter, Path
 
-from app.models.schemas import DocumentIngestRequest, DocumentIngestResponse
-from app.services.ingestion_service import ingest_document
+from backend.app.models.schemas import DocumentIngestRequest, DocumentIngestResponse
+from backend.app.services.ingestion_service import ingest_document
 
 router = APIRouter(prefix="/api/v1/dossier", tags=["dossier"])
+
+# Tenant-ID must be alphanumeric with hyphens/underscores (no path traversal)
+TENANT_PATH = Path(
+    ...,
+    min_length=1,
+    max_length=64,
+    pattern=r"^[a-zA-Z0-9][a-zA-Z0-9_-]*$",
+    description="Tenant identifier (alphanumeric, hyphens, underscores)",
+)
 
 
 @router.post(
@@ -20,7 +29,7 @@ router = APIRouter(prefix="/api/v1/dossier", tags=["dossier"])
 )
 async def create_document(
     request: DocumentIngestRequest,
-    tenant_id: str = Path(..., min_length=1, max_length=64, description="Tenant identifier"),
+    tenant_id: str = TENANT_PATH,
 ) -> DocumentIngestResponse:
     """Accept a document for ingestion into the tenant's dossier."""
     return await ingest_document(tenant_id, request)
