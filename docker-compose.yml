@@ -1,0 +1,16 @@
+services:
+  aakte:
+    build: .
+    ports:
+      - "${AAKTE_PORT:-8000}:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - AAKTE_HOST=0.0.0.0
+      - AAKTE_PORT=8000
+      - AAKTE_SQLITE_PATH=/app/data/aakte.db
+      - AAKTE_LANCEDB_PATH=/app/data/lancedb
+      - AAKTE_KUZU_PATH=/app/data/kuzu
+      - AAKTE_LLM_BASE_URL=${AAKTE_LLM_BASE_URL:-http://host.docker.internal:11434}
+      - AAKTE_LOG_LEVEL=${AAKTE_LOG_LEVEL:-INFO}
+    restart: unless-stopped
