@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
+    <title>Agentische Akte</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Agentische Akte</h1>
+        <p class="subtitle">Privacy-first Dokumentenanalyse</p>
+    </header>
+
+    <main>
+        <section id="upload-section">
+            <h2>Dokumente hochladen</h2>
+            <div class="upload-area" id="drop-zone">
+                <p>PDF-Dateien hierher ziehen oder auswaehlen</p>
+                <input type="file" id="pdf-upload" accept=".pdf" multiple>
+                <label for="pdf-upload" class="btn">Dateien auswaehlen</label>
+            </div>
+
+            <div id="file-list"></div>
+
+            <div class="form-group">
+                <label for="tenant-id">Tenant-ID</label>
+                <input type="text" id="tenant-id" value="default" placeholder="z.B. mandant-01">
+            </div>
+
+            <button id="submit-btn" class="btn btn-primary" disabled>Dokumente verarbeiten</button>
+        </section>
+
+        <section id="status-section" hidden>
+            <h2>Verarbeitungsstatus</h2>
+            <div id="status-log"></div>
+        </section>
+    </main>
+
+    <footer>
+        <p>AAkte v0.1.0 — Alle Daten bleiben lokal.</p>
+    </footer>
+
+    <script src="cleandocs_pipeline.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
