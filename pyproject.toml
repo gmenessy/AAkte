@@ -1,0 +1,25 @@
+[project]
+name = "aakte"
+version = "0.1.0"
+description = "Air-gapped, privacy-first document analysis"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "eval_*.py"]
+python_classes = ["Test*", "Eval*"]
+python_functions = ["test_*", "eval_*"]
+addopts = "-v --tb=short"
+markers = [
+    "unit: Fast, isolated unit tests",
+    "integration: Tests that hit the FastAPI TestClient",
+    "eval: Evaluation suite for quality metrics",
+]
+
+[tool.coverage.run]
+source = ["backend"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 80
